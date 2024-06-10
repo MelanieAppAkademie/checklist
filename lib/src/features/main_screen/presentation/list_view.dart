@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 class ItemsListView extends StatefulWidget {
   final DatabaseRepository databaseRepository;
+
   const ItemsListView({super.key, required this.databaseRepository});
 
   @override
@@ -10,17 +11,44 @@ class ItemsListView extends StatefulWidget {
 }
 
 class _ItemsListViewState extends State<ItemsListView> {
-  late final Future<List<String>?> _itemsList =
-      widget.databaseRepository.getItems();
+  late Future<List<String>?> _itemsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+// die Items müssen beim initialisieren noch mal aus der Datenbank geladen werden
+    _loadItems();
+
+  }
+
+  // Hier werden die Itens aus der Datenbank geholt
+  void _loadItems() {
+    setState(() {
+      _itemsFuture = widget.databaseRepository.getItems();
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: FutureBuilder<List<String>?>(
-        future: _itemsList,
+        future: _itemsFuture,
         builder: (context, snapshot) {
-          if (snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          } else if (snapshot.hasError) {
+            return const Center(
+              child: Text('Error loading items'),
+            );
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+              child: Text('No items found'),
+            );
+          } else {
             final itemsList = snapshot.data!;
             return ListView.builder(
               itemCount: itemsList.length,
@@ -35,30 +63,15 @@ class _ItemsListViewState extends State<ItemsListView> {
                         onPressed: () async {
                           await widget.databaseRepository
                               .removeItem(itemsList[index]);
-                          setState(() {});
+                          // Items neu laden nach dem Entfernen
+                          _loadItems();
+                         
                         },
                       ),
                     ],
                   ),
                 );
               },
-            );
-          } else if (snapshot.hasError) {
-            return const Column(
-              children: [
-                Icon(Icons.error),
-                SizedBox(height: 16),
-                Text('Error'),
-              ],
-            );
-          } else {
-            return const Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(
-                child: LinearProgressIndicator(
-                  color: Colors.black,
-                ),
-              ),
             );
           }
         },

@@ -1,6 +1,5 @@
 import 'package:checklist/src/data/database_repository.dart';
 import 'package:flutter/material.dart';
-
 import 'list_view.dart';
 
 class MainScreen extends StatefulWidget {
@@ -87,14 +86,17 @@ class _MainScreenState extends State<MainScreen> {
                           ),
                           const SizedBox(width: 16),
                           IconButton(
-                              onPressed: () async {
-                                await widget.databaseRepository
-                                    .storeItem(inputTextController.text);
-                                setState(() {
-                                  inputTextController.clear();
-                                });
-                              },
-                              icon: const Icon(Icons.add)),
+                            onPressed: () async {
+                              await widget.databaseRepository
+                                  .storeItem(inputTextController.text);
+                              
+                              setState(() {
+                                inputTextController.clear();
+                              });
+                              
+                            },
+                            icon: const Icon(Icons.add),
+                          ),
                         ],
                       ),
                     ),
